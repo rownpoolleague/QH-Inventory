@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Inventory App</title>
+  <style>
+    .page { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- PAGE 1: SELECT STORE -->
+<div id="page-store" class="page">
+  <h2>Select Your Store</h2>
+  <select id="storeSelect"></select>
+  <br><br>
+  <button onclick="enterStore()">Enter</button>
+</div>
+
+<!-- PAGE 2: MENU -->
+<div id="page-menu" class="page">
+  <h2>Inventory Menu</h2>
+  <button onclick="goNameSearch()">Search by Item Name</button>
+  <br><br>
+  <button onclick="goTypeSearch()">Search by Item Type</button>
+</div>
+<br><br>
+<button onclick="goReview()">Review Inventory</button>
+
+
+
+<!-- PAGE 3: SEARCH BY NAME -->
+<div id="page-name" class="page">
+  <h2>Search by Item Name</h2>
+  <input id="nameInput" list="nameList" placeholder="Start typing...">
+  <datalist id="nameList"></datalist>
+  <br><br>
+  <button onclick="selectNameItem()">Go</button>
+  <button onclick="backToMenu()">Back</button>
+</div>
+
+<!-- PAGE 4: SEARCH BY TYPE -->
+<div id="page-type" class="page">
+  <h2>Search by Item Type</h2>
+  <select id="typeSelect" onchange="displayTypeItems()"></select>
+  <br><br>
+  <div id="typeItems"></div>
+  <br>
+  <button onclick="backToMenu()">Back</button>
+</div>
+
+
+<!-- PAGE 5: ITEM ENTRY -->
+<div id="page-item-entry" class="page">
+  <h2 id="entryItemName"></h2>
+  <div id="unitInputs"></div>
+  <br>
+  <div id="itemTotal" style="margin-top:10px; font-size:18px; font-weight:bold;">
+  Total: 0
+</div>
+
+  <button onclick="saveItemEntry()">Save Item</button>
+  <br><br>
+  <button onclick="backToMenu()">Back</button>
+</div>
+<!-- PAGE 6: REVIEW PAGE -->
+<div id="page-review" class="page">
+  <h2>Review Inventory</h2>
+  <div id="reviewList"></div>
+
+  <br><br>
+  <button onclick="downloadInventory()">Download Inventory</button>
+<br><br>
+<button onclick="backToMenu()">Back</button>
+
+</div>
+
+<script>
+/****************************************************
+ * CONFIG
+ ****************************************************/
+const API_URL = "https://script.google.com/macros/s/AKfycbwjUWTv-k7shRtPEwfK8zZBW-LoZPWOHBs52MNGcapnfELcMVo0r6lyYVxZ4Gisrb-eZQ/exec";
+
+/****************************************************
+ * SESSION OBJECT
+ ****************************************************/
+let inventorySession = {
+  store: null,
+  entries: {} // itemName: { unitName: qty }
+};
+
+/****************************************************
+ * PAGE NAVIGATION
+ ****************************************************/
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+  document.getElementById(id).style.display = "block";
+}
+
+/****************************************************
+ * INITIAL LOAD
+ ****************************************************/
+window.onload = async function() {
+  loadSessionFromLocal();   // NEW
+  await loadStores();
+  await loadParameters();
+  showPage("page-store");
+};
+
+
+/****************************************************
+ * LOAD STORES
+ ****************************************************/
+async function loadStores() {
+  const res = await fetch(API_URL + "?action=getStores");
+  const data = await res.json();
+
+  const sel = document.getElementById("storeSelect");
+  sel.innerHTML = "";
+
+  data.stores.forEach(s => {
+    sel.innerHTML += `<option value="${s}">${s}</option>`;
+  });
+}
+
+/****************************************************
+ * LOAD PARAMETERS (items, types, units)
+ ****************************************************/
+let parameters = [];
+
+async function loadParameters() {
+  const res = await fetch(API_URL + "?action=getParameters");
+  const data = await res.json();
+  parameters = data.items;
+}
+
+/****************************************************
+ * ENTER STORE
+ ****************************************************/
+function enterStore() {
+  inventorySession.store = document.getElementById("storeSelect").value;
+  showPage("page-menu");
+}
+
+/****************************************************
+ * MENU NAVIGATION
+ ****************************************************/
+function goNameSearch() {
+  populateNameList();
+  showPage("page-name");
+}
+
+function goTypeSearch() {
+  populateTypeList();
+  showPage("page-type");
+}
+
+function backToMenu() {
+  showPage("page-menu");
+}
+
+/****************************************************
+ * POPULATE NAME AUTOFILL
+ ****************************************************/
+function populateNameList() {
+  const list = document.getElementById("nameList");
+  list.innerHTML = "";
+
+  parameters.forEach(p => {
+    list.innerHTML += `<option value="${p.item}">`;
+  });
+}
+
+/****************************************************
+ * POPULATE TYPE DROPDOWN
+ ****************************************************/
+function populateTypeList() {
+  const sel = document.getElementById("typeSelect");
+  sel.innerHTML = "";
+
+  const types = [...new Set(parameters.map(p => p.type))];
+
+  types.forEach(t => {
+    sel.innerHTML += `<option value="${t}">${t}</option>`;
+  });
+}
+
+/****************************************************
+ * ITEM ENTRY PAGE (placeholder)
+ ****************************************************/
+function openItemEntry(itemName) {
+  const item = parameters.find(p => p.item === itemName);
+
+  if (!item) {
+    alert("Item not found");
+    return;
+  }
+
+  // Set item name on page
+  document.getElementById("entryItemName").innerText = item.item;
+
+  // Build unit inputs
+  const container = document.getElementById("unitInputs");
+  container.innerHTML = "";
+
+  // If user already entered this item, load saved values
+  const savedEntry = inventorySession.entries[item.item] || {};
+
+  item.validUnits.forEach(unit => {
+    const multiplier = item.unitValues[unit];
+    const savedValue = savedEntry[unit] || 0;
+
+    container.innerHTML += `
+      <div style="margin-bottom:8px;">
+        <label style="display:inline-block; width:140px;">
+          ${unit} (${multiplier})
+        </label>
+        <input type="number" 
+               id="unit_${unit}" 
+               min="0" 
+               value="${savedValue}" 
+               style="width:80px;" 
+               oninput="updateItemTotal()">
+      </div>
+    `;
+  });
+
+  // Calculate total immediately (in case values were saved)
+  updateItemTotal();
+
+  showPage("page-item-entry");
+}
+
+
+
+
+/****************************************************
+ * SAVE ITEM ENTRY (placeholder)
+ ****************************************************/
+function saveItemEntry() {
+  const itemName = document.getElementById("entryItemName").innerText;
+  const item = parameters.find(p => p.item === itemName);
+
+  const entry = {};
+
+  item.validUnits.forEach(unit => {
+    const val = Number(document.getElementById("unit_" + unit).value);
+    if (val > 0) entry[unit] = val;
+  });
+
+  inventorySession.entries[itemName] = entry;
+
+  saveSessionToLocal();   // NEW
+
+  backToMenu();
+}
+
+function displayTypeItems() {
+  const selectedType = document.getElementById("typeSelect").value;
+  const container = document.getElementById("typeItems");
+
+  // Filter items by type
+  const filtered = parameters.filter(p => p.type === selectedType);
+
+  // Build clickable list
+  container.innerHTML = "";
+  filtered.forEach(item => {
+    container.innerHTML += `
+      <div style="padding:6px; border-bottom:1px solid #ccc; cursor:pointer;"
+           onclick="openItemEntry('${item.item}')">
+        ${item.item}
+      </div>
+    `;
+  });
+}
+function selectNameItem() {
+  const name = document.getElementById("nameInput").value.trim();
+  if (!name) return;
+
+  openItemEntry(name);
+}
+function updateItemTotal() {
+  const itemName = document.getElementById("entryItemName").innerText;
+  const item = parameters.find(p => p.item === itemName);
+
+  let total = 0;
+
+  item.validUnits.forEach(unit => {
+    const qty = Number(document.getElementById("unit_" + unit).value) || 0;
+    const multiplier = item.unitValues[unit];
+    total += qty * multiplier;
+  });
+
+  document.getElementById("itemTotal").innerText = "Total: " + total;
+}
+
+function goReview() {
+  buildReviewList();
+  showPage("page-review");
+}
+function buildReviewList() {
+  const container = document.getElementById("reviewList");
+  container.innerHTML = "";
+
+  const entries = inventorySession.entries;
+
+  if (Object.keys(entries).length === 0) {
+    container.innerHTML = "<p>No items entered yet.</p>";
+    return;
+  }
+
+  for (const itemName in entries) {
+    const item = parameters.find(p => p.item === itemName);
+    const entry = entries[itemName];
+
+    let total = 0;
+    let unitBreakdown = "";
+
+    for (const unit in entry) {
+      const qty = entry[unit];
+      const multiplier = item.unitValues[unit];
+      const subtotal = qty * multiplier;
+
+      total += subtotal;
+
+      unitBreakdown += `
+        <div style="margin-left:20px;">
+          ${unit}: ${qty} × ${multiplier} = ${subtotal}
+        </div>
+      `;
+    }
+
+   container.innerHTML += `
+  <div style="padding:10px; border-bottom:1px solid #ccc; cursor:pointer;"
+       onclick="editReviewItem('${itemName}')">
+    <strong>${itemName}</strong><br>
+    ${unitBreakdown}
+    <div style="margin-top:5px; font-weight:bold;">
+      Total: ${total}
+    </div>
+  </div>
+`;
+
+  }
+}
+
+/****************************************************
+ * LOCAL STORAGE SUPPORT
+ ****************************************************/
+function saveSessionToLocal() {
+  localStorage.setItem("inventorySession", JSON.stringify(inventorySession));
+}
+
+function loadSessionFromLocal() {
+  const saved = localStorage.getItem("inventorySession");
+  if (saved) {
+    inventorySession = JSON.parse(saved);
+  }
+}
+function editReviewItem(itemName) {
+  openItemEntry(itemName);
+}
+
+function downloadInventory() {
+  const entries = inventorySession.entries;
+
+  if (Object.keys(entries).length === 0) {
+    alert("No items to download");
+    return;
+  }
+
+  let text = "";
+
+  for (const itemName in entries) {
+    const item = parameters.find(p => p.item === itemName);
+    const units = entries[itemName];
+
+    text += `Item: ${itemName}\n`;
+
+    let total = 0;
+
+    for (const unit in units) {
+      const qty = units[unit];
+      const multiplier = item.unitValues[unit];
+      const subtotal = qty * multiplier;
+
+      total += subtotal;
+
+      text += `  ${unit}: ${qty} × ${multiplier} = ${subtotal}\n`;
+    }
+
+    text += `  Total: ${total}\n\n`;
+  }
+
+  // Create a blob as plain text
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+
+  // Create a temporary link
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+
+  // Filename
+  a.download = `inventory_${inventorySession.store}_${Date.now()}.txt`;
+
+  // Required for iPhone
+  document.body.appendChild(a);
+
+  // Trigger download
+  a.click();
+
+  // Cleanup
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+
+
+
+</script>
+
+</body>
+</html>
