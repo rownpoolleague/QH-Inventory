@@ -71,10 +71,36 @@
   <br><br>
   <button onclick="downloadInventory()">Download Inventory</button>
 <br><br>
+<button onclick="openClearModal()">Clear All</button>
+<br><br>
 <button onclick="backToMenu()">Back</button>
 
 </div>
+<!-- CLEAR ALL CONFIRMATION MODAL -->
+<div id="clearModal" 
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
 
+  <div style="background:white; padding:20px; width:80%; max-width:300px; 
+              border-radius:8px; text-align:center;">
+
+    <h3>Clear All Inventory?</h3>
+    <p>This will remove all saved items.</p>
+
+    <button onclick="confirmClearAll()" 
+            style="background:#c62828; color:white; padding:10px 20px; margin-top:10px;">
+      Clear All
+    </button>
+
+    <br><br>
+
+    <button onclick="closeClearModal()" 
+            style="padding:8px 20px;">
+      Cancel
+    </button>
+
+  </div>
+</div>
 <script>
 /****************************************************
  * CONFIG
@@ -414,8 +440,41 @@ function downloadInventory() {
   window.URL.revokeObjectURL(url);
 }
 
+function clearAllInventory() {
+  if (!confirm("Clear all inventory entries?")) return;
 
+  // Keep the store, wipe the entries
+  inventorySession = {
+    store: inventorySession.store,
+    entries: {}
+  };
 
+  saveSessionToLocal();
+
+  alert("All inventory cleared.");
+
+  backToMenu();
+}
+function openClearModal() {
+  document.getElementById("clearModal").style.display = "flex";
+}
+
+function closeClearModal() {
+  document.getElementById("clearModal").style.display = "none";
+}
+function confirmClearAll() {
+  // Keep the store, wipe the entries
+  inventorySession = {
+    store: inventorySession.store, // keep store
+    entries: {}                    // delete all items
+  };
+
+  saveSessionToLocal();            // update localStorage
+
+  closeClearModal();               // hide the modal
+  alert("All inventory cleared."); // tell the user
+  backToMenu();                    // return to main menu
+}  
 
 </script>
 
