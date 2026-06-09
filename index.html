@@ -176,10 +176,17 @@ function showPage(id) {
  * INITIAL LOAD
  ****************************************************/
 window.onload = async function() {
-  loadSessionFromLocal();   
+  loadSessionFromLocal();    
   await loadStores();
   await loadParameters();
-  showPage("page-store");
+  
+  // New Logic: If store is already in local storage, skip straight to menu
+  if (inventorySession.store) {
+    showPage("page-menu");
+  } else {
+    showPage("page-store");
+  }
+};
 };
 
 
@@ -213,10 +220,11 @@ async function loadParameters() {
  * ENTER STORE
  ****************************************************/
 function enterStore() {
-  inventorySession.store = document.getElementById("storeSelect").value;
+  const selectedStore = document.getElementById("storeSelect").value;
+  inventorySession.store = selectedStore; // Set the store
+  saveSessionToLocal(); // Save to local storage
   showPage("page-menu");
 }
-
 /****************************************************
  * MENU NAVIGATION
  ****************************************************/
@@ -508,13 +516,18 @@ function downloadInventory() {
 function clearAllInventory() {
   if (!confirm("Clear all inventory entries?")) return;
 
-  inventorySession = {
-    store: inventorySession.store,
-    entries: {}
-  };
+  // Clear only the entries
+  inventorySession.entries = {};
 
+  // Save the cleared state
   saveSessionToLocal();
-  alert("All inventory cleared.");
+  
+  // Refresh the UI if they are on the review page
+  if (document.getElementById("page-review").style.display === "block") {
+    buildReviewList();
+  }
+
+  alert("All inventory items cleared.");
   backToMenu();
 }
 
