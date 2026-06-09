@@ -9,7 +9,6 @@
 </head>
 <body>
 
-<!-- PAGE 1: SELECT STORE -->
 <div id="page-store" class="page">
   <h2>Select Your Store</h2>
   <select id="storeSelect"></select>
@@ -17,7 +16,6 @@
   <button onclick="enterStore()">Enter</button>
 </div>
 
-<!-- PAGE 2: MENU -->
 <div id="page-menu" class="page">
   <h2>Inventory Menu</h2>
   <button onclick="goNameSearch()">Search by Item Name</button>
@@ -28,8 +26,6 @@
 <button onclick="goReview()">Review Inventory</button>
 
 
-
-<!-- PAGE 3: SEARCH BY NAME -->
 <div id="page-name" class="page">
   <h2>Search by Item Name</h2>
   <input id="nameInput" list="nameList" placeholder="Start typing...">
@@ -39,10 +35,11 @@
   <button onclick="backToMenu()">Back</button>
 </div>
 
-<!-- PAGE 4: SEARCH BY TYPE -->
 <div id="page-type" class="page">
   <h2>Search by Item Type</h2>
-  <select id="typeSelect" onchange="displayTypeItems()"></select>
+  <select id="typeSelect" onchange="displayTypeItems()">
+    <option value="" disabled selected hidden>Choose a type...</option>
+  </select>
   <br><br>
   <div id="typeItems"></div>
   <br>
@@ -50,7 +47,6 @@
 </div>
 
 
-<!-- PAGE 5: ITEM ENTRY -->
 <div id="page-item-entry" class="page">
   <h2 id="entryItemName"></h2>
   <div id="unitInputs"></div>
@@ -63,7 +59,7 @@
   <br><br>
   <button onclick="backToMenu()">Back</button>
 </div>
-<!-- PAGE 6: REVIEW PAGE -->
+
 <div id="page-review" class="page">
   <h2>Review Inventory</h2>
   <div id="reviewList"></div>
@@ -76,7 +72,7 @@
 <button onclick="backToMenu()">Back</button>
 
 </div>
-<!-- CLEAR ALL CONFIRMATION MODAL -->
+
 <div id="clearModal" 
      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
@@ -101,6 +97,7 @@
 
   </div>
 </div>
+
 <script>
 /****************************************************
  * CONFIG
@@ -127,7 +124,7 @@ function showPage(id) {
  * INITIAL LOAD
  ****************************************************/
 window.onload = async function() {
-  loadSessionFromLocal();   // NEW
+  loadSessionFromLocal();   
   await loadStores();
   await loadParameters();
   showPage("page-store");
@@ -172,12 +169,16 @@ function enterStore() {
  * MENU NAVIGATION
  ****************************************************/
 function goNameSearch() {
+  document.getElementById("nameInput").value = ""; // Clear text box on open
   populateNameList();
   showPage("page-name");
 }
 
 function goTypeSearch() {
+  // Clear out lingering items and reset dropdown selection to index 0 (placeholder)
+  document.getElementById("typeItems").innerHTML = "";
   populateTypeList();
+  document.getElementById("typeSelect").selectedIndex = 0;
   showPage("page-type");
 }
 
@@ -202,7 +203,8 @@ function populateNameList() {
  ****************************************************/
 function populateTypeList() {
   const sel = document.getElementById("typeSelect");
-  sel.innerHTML = "";
+  // Keep the hidden default choice intact while building dynamic parameters
+  sel.innerHTML = '<option value="" disabled selected hidden>Choose a type...</option>';
 
   const types = [...new Set(parameters.map(p => p.type))];
 
@@ -283,6 +285,9 @@ function saveItemEntry() {
 
 function displayTypeItems() {
   const selectedType = document.getElementById("typeSelect").value;
+  // Guard clause in case placeholder option is selected programmatically
+  if (!selectedType) return; 
+
   const container = document.getElementById("typeItems");
 
   // Filter items by type
@@ -299,12 +304,14 @@ function displayTypeItems() {
     `;
   });
 }
+
 function selectNameItem() {
   const name = document.getElementById("nameInput").value.trim();
   if (!name) return;
 
   openItemEntry(name);
 }
+
 function updateItemTotal() {
   const itemName = document.getElementById("entryItemName").innerText;
   const item = parameters.find(p => p.item === itemName);
@@ -387,6 +394,9 @@ function editReviewItem(itemName) {
   openItemEntry(itemName);
 }
 
+/****************************************************
+ * DOWNLOAD INVENTORY
+ ****************************************************/
 function downloadInventory() {
   const entries = inventorySession.entries;
 
@@ -418,24 +428,13 @@ function downloadInventory() {
     text += `  Total: ${total}\n\n`;
   }
 
-  // Create a blob as plain text
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-
-  // Create a temporary link
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-
-  // Filename
   a.download = `inventory_${inventorySession.store}_${Date.now()}.txt`;
-
-  // Required for iPhone
   document.body.appendChild(a);
-
-  // Trigger download
   a.click();
-
-  // Cleanup
   document.body.removeChild(a);
   window.URL.revokeObjectURL(url);
 }
@@ -443,18 +442,16 @@ function downloadInventory() {
 function clearAllInventory() {
   if (!confirm("Clear all inventory entries?")) return;
 
-  // Keep the store, wipe the entries
   inventorySession = {
     store: inventorySession.store,
     entries: {}
   };
 
   saveSessionToLocal();
-
   alert("All inventory cleared.");
-
   backToMenu();
 }
+
 function openClearModal() {
   document.getElementById("clearModal").style.display = "flex";
 }
@@ -462,18 +459,17 @@ function openClearModal() {
 function closeClearModal() {
   document.getElementById("clearModal").style.display = "none";
 }
+
 function confirmClearAll() {
-  // Keep the store, wipe the entries
   inventorySession = {
-    store: inventorySession.store, // keep store
-    entries: {}                    // delete all items
+    store: inventorySession.store, 
+    entries: {}                    
   };
 
-  saveSessionToLocal();            // update localStorage
-
-  closeClearModal();               // hide the modal
-  alert("All inventory cleared."); // tell the user
-  backToMenu();                    // return to main menu
+  saveSessionToLocal();            
+  closeClearModal();               
+  alert("All inventory cleared."); 
+  backToMenu();                    
 }  
 
 </script>
