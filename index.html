@@ -53,6 +53,15 @@
   cursor: pointer;
   margin: 5px;
 }
+.logo-fixed-bottom {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;   /* adjust */
+  opacity: 0.9;   /* optional */
+  z-index: 9999;
+}
 
     input, select {
       padding: 8px;
@@ -130,6 +139,7 @@
     <button onclick="closeClearModal()">Cancel</button>
   </div>
 </div>
+<img src="qhicon51.png" class="logo-fixed-bottom">
 
 <script>
 /* Your existing JavaScript functions go here */
