@@ -1,102 +1,137 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d32f2f">
+<link rel="apple-touch-icon" href="icon-192.png">
   <meta charset="UTF-8">
   <title>Inventory App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-    .page { display: none; }
+    /* Centers everything on the page */
+    body {
+  background-color: #ffffff;
+  color: #000000;
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0; /* Changed from 20px to 0 */
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+    /* Container for the app */
+   .form-wrapper {
+  width: 100%; /* Will now fill the width of the phone */
+  min-height: 100vh; /* Ensures the background covers the whole screen */
+  border: 6px solid #000000;
+  padding: 20px;
+  text-align: center;
+  box-sizing: border-box;
+  /* Removed max-width if you want true edge-to-edge on all devices */
+}
+
+    .page {
+      display: none;
+    }
+
+    button {
+  background-color: #d32f2f;
+  color: #ffffff;
+  /* Add these two lines */
+  border: 2px solid #000000; 
+  box-sizing: border-box;
+  width: 175px;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 5px;
+}
+
+    input, select {
+      padding: 8px;
+      width: 80%;
+      margin: 10px auto;
+    }
   </style>
 </head>
 <body>
 
-<div id="page-store" class="page">
-  <h2>Select Your Store</h2>
-  <select id="storeSelect"></select>
-  <br><br>
-  <button onclick="enterStore()">Enter</button>
-</div>
-
-<div id="page-menu" class="page">
-  <h2>Inventory Menu</h2>
-  <button onclick="goNameSearch()">Search by Item Name</button>
-  <br><br>
-  <button onclick="goTypeSearch()">Search by Item Type</button>
-</div>
-<br><br>
-<button onclick="goReview()">Review Inventory</button>
-
-
-<div id="page-name" class="page">
-  <h2>Search by Item Name</h2>
-  <input id="nameInput" list="nameList" placeholder="Start typing...">
-  <datalist id="nameList"></datalist>
-  <br><br>
-  <button onclick="selectNameItem()">Go</button>
-  <button onclick="backToMenu()">Back</button>
-</div>
-
-<div id="page-type" class="page">
-  <h2>Search by Item Type</h2>
-  <select id="typeSelect" onchange="displayTypeItems()">
-    <option value="" disabled selected hidden>Choose a type...</option>
-  </select>
-  <br><br>
-  <div id="typeItems"></div>
-  <br>
-  <button onclick="backToMenu()">Back</button>
-</div>
-
-
-<div id="page-item-entry" class="page">
-  <h2 id="entryItemName"></h2>
-  <div id="unitInputs"></div>
-  <br>
-  <div id="itemTotal" style="margin-top:10px; font-size:18px; font-weight:bold;">
-  Total: 0
-</div>
-
-  <button onclick="saveItemEntry()">Save Item</button>
-  <br><br>
-  <button onclick="backToMenu()">Back</button>
-</div>
-
-<div id="page-review" class="page">
-  <h2>Review Inventory</h2>
-  <div id="reviewList"></div>
-
-  <br><br>
-  <button onclick="downloadInventory()">Download Inventory</button>
-<br><br>
-<button onclick="openClearModal()">Clear All</button>
-<br><br>
-<button onclick="backToMenu()">Back</button>
-
-</div>
-
-<div id="clearModal" 
-     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-            background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
-
-  <div style="background:white; padding:20px; width:80%; max-width:300px; 
-              border-radius:8px; text-align:center;">
-
-    <h3>Clear All Inventory?</h3>
-    <p>This will remove all saved items.</p>
-
-    <button onclick="confirmClearAll()" 
-            style="background:#c62828; color:white; padding:10px 20px; margin-top:10px;">
-      Clear All
-    </button>
-
+<div class="form-wrapper">
+  <div id="page-store" class="page">
+    <h2>Select Your Store</h2>
+    <select id="storeSelect"></select>
     <br><br>
+    <button onclick="enterStore()">Enter</button>
+  </div>
 
-    <button onclick="closeClearModal()" 
-            style="padding:8px 20px;">
-      Cancel
-    </button>
+  <div id="page-menu" class="page">
+    <h2>Inventory Menu</h2>
+    <button onclick="goNameSearch()">Search by Item Name</button>
+    <br><br>
+    <button onclick="goTypeSearch()">Search by Item Type</button>
+    <br><br>
+    <button onclick="goReview()">Review Inventory</button>
+  </div>
 
+  <div id="page-name" class="page">
+    <h2>Search by Item Name</h2>
+    <input id="nameInput" type="text" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
+    <div id="customDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; text-align: left; width: 80%; margin: 0 auto;"></div>
+    <br><br>
+    <button onclick="selectNameItem()">Go</button>
+    <button onclick="backToMenu()">Back</button>
+  </div>
+
+  <div id="page-type" class="page">
+    <h2>Search by Item Type</h2>
+    <select id="typeSelect" onchange="displayTypeItems()">
+      <option value="" disabled selected hidden>Choose a type...</option>
+    </select>
+    <br><br>
+    <div id="typeItems"></div>
+    <br>
+    <button onclick="backToMenu()">Back</button>
+  </div>
+
+  <div id="page-item-entry" class="page">
+    <h2 id="entryItemName"></h2>
+    <div id="unitInputs"></div>
+    <br>
+    <div id="itemTotal" style="margin-top:10px; font-size:18px; font-weight:bold;">Total: 0</div>
+    <button onclick="saveItemEntry()">Save Item</button>
+    <br><br>
+    <button onclick="backToMenu()">Back</button>
+  </div>
+
+  <div id="page-review" class="page">
+    <h2>Review Inventory</h2>
+    <div id="reviewList"></div>
+    <br><br>
+    <button onclick="downloadInventory()">Download Inventory</button>
+    <br><br>
+    <button onclick="openClearModal()">Clear All</button>
+    <br><br>
+    <button onclick="backToMenu()">Back</button>
   </div>
 </div>
+
+<div id="clearModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
+  <div style="background:white; padding:20px; width:80%; max-width:300px; border-radius:8px; text-align:center;">
+    <h3>Clear All Inventory?</h3>
+    <p>This will remove all saved items.</p>
+    <button onclick="confirmClearAll()" style="background:#c62828;">Clear All</button>
+    <button onclick="closeClearModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+/* Your existing JavaScript functions go here */
+</script>
+
+</body>
+</html>
 
 <script>
 /****************************************************
@@ -109,7 +144,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwjUWTv-k7shRtPEwfK8zZB
  ****************************************************/
 let inventorySession = {
   store: null,
-  entries: {} // itemName: { unitName: qty }
+  entries: {} 
 };
 
 /****************************************************
@@ -169,13 +204,12 @@ function enterStore() {
  * MENU NAVIGATION
  ****************************************************/
 function goNameSearch() {
-  document.getElementById("nameInput").value = ""; // Clear text box on open
-  populateNameList();
+  document.getElementById("nameInput").value = ""; 
+  document.getElementById("customDropdown").style.display = "none"; // Hide list initially
   showPage("page-name");
 }
 
 function goTypeSearch() {
-  // Clear out lingering items and reset dropdown selection to index 0 (placeholder)
   document.getElementById("typeItems").innerHTML = "";
   populateTypeList();
   document.getElementById("typeSelect").selectedIndex = 0;
@@ -187,15 +221,45 @@ function backToMenu() {
 }
 
 /****************************************************
- * POPULATE NAME AUTOFILL
+ * CUSTOM VERTICAL DROPDOWN FILTER LOGIC (Replaced old populateNameList)
  ****************************************************/
-function populateNameList() {
-  const list = document.getElementById("nameList");
-  list.innerHTML = "";
+function filterNameList() {
+  const input = document.getElementById("nameInput");
+  const filter = input.value.toLowerCase().trim();
+  const dropdown = document.getElementById("customDropdown");
+  
+  // If the box is empty, completely hide the dropdown box
+  if (!filter) {
+    dropdown.innerHTML = "";
+    dropdown.style.display = "none";
+    return;
+  }
+  
+  // Filter parameters by what the user types
+  const filtered = parameters.filter(p => p.item.toLowerCase().includes(filter));
+  
+  // Build the list items inside our custom container
+  dropdown.innerHTML = "";
+  if (filtered.length > 0) {
+    dropdown.style.display = "block"; // Show the container row
+    filtered.forEach(p => {
+      dropdown.innerHTML += `
+        <div style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;" 
+             onclick="selectDropdownItem('${p.item.replace(/'/g, "\\'")}')">
+          ${p.item}
+        </div>
+      `;
+    });
+  } else {
+    // Hide container if there are zero matches
+    dropdown.style.display = "none";
+  }
+}
 
-  parameters.forEach(p => {
-    list.innerHTML += `<option value="${p.item}">`;
-  });
+// Automatically fills the text input field when an item in the list is clicked
+function selectDropdownItem(itemName) {
+  document.getElementById("nameInput").value = itemName;
+  document.getElementById("customDropdown").style.display = "none"; // Close list
 }
 
 /****************************************************
@@ -203,7 +267,6 @@ function populateNameList() {
  ****************************************************/
 function populateTypeList() {
   const sel = document.getElementById("typeSelect");
-  // Keep the hidden default choice intact while building dynamic parameters
   sel.innerHTML = '<option value="" disabled selected hidden>Choose a type...</option>';
 
   const types = [...new Set(parameters.map(p => p.type))];
@@ -224,14 +287,11 @@ function openItemEntry(itemName) {
     return;
   }
 
-  // Set item name on page
   document.getElementById("entryItemName").innerText = item.item;
 
-  // Build unit inputs
   const container = document.getElementById("unitInputs");
   container.innerHTML = "";
 
-  // If user already entered this item, load saved values
   const savedEntry = inventorySession.entries[item.item] || {};
 
   item.validUnits.forEach(unit => {
@@ -253,14 +313,9 @@ function openItemEntry(itemName) {
     `;
   });
 
-  // Calculate total immediately (in case values were saved)
   updateItemTotal();
-
   showPage("page-item-entry");
 }
-
-
-
 
 /****************************************************
  * SAVE ITEM ENTRY (placeholder)
@@ -277,23 +332,17 @@ function saveItemEntry() {
   });
 
   inventorySession.entries[itemName] = entry;
-
-  saveSessionToLocal();   // NEW
-
+  saveSessionToLocal();   
   backToMenu();
 }
 
 function displayTypeItems() {
   const selectedType = document.getElementById("typeSelect").value;
-  // Guard clause in case placeholder option is selected programmatically
   if (!selectedType) return; 
 
   const container = document.getElementById("typeItems");
-
-  // Filter items by type
   const filtered = parameters.filter(p => p.type === selectedType);
 
-  // Build clickable list
   container.innerHTML = "";
   filtered.forEach(item => {
     container.innerHTML += `
@@ -471,7 +520,11 @@ function confirmClearAll() {
   alert("All inventory cleared."); 
   backToMenu();                    
 }  
-
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
 </script>
 
 </body>
