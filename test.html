@@ -37,7 +37,7 @@
     button {
       background-color: #d32f2f;
       color: #ffffff;
-      border: 3px solid #000000; 
+      border: 2px solid #000000; 
       box-sizing: border-box;
       width: 275px;
       border-radius: 6px;
@@ -45,7 +45,7 @@
       font-weight: bold;
       cursor: pointer;
       margin: 5px;
-      font-size: 22px;
+      font-size: 30px;
     }
     .logo-fixed-bottom {
       position: absolute;
@@ -75,7 +75,7 @@
   </div>
 
   <div id="page-menu" class="page">
-    <h2>QH Inventory Helper</h2>
+    <h2>Inventory Menu</h2>
     <button onclick="goNameSearch()">Search by Item Name</button>
     <br><br>
     <button onclick="goTypeSearch()">Search by Item Type</button>
@@ -84,16 +84,16 @@
   </div>
 
   <div id="page-name" class="page">
-  <h2>Search by Item Name</h2>
-  <input id="nameInput" type="text" style="width:200px;" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
-  <div id="customDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; text-align: left; width: 80%; margin: 0 auto;"></div>
-  <br><br>
-  <button onclick="backToMenu()">Back</button>
-</div>
+    <h2>Search by Item Name</h2>
+    <input id="nameInput" type="text" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
+    <div id="customDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; text-align: left; width: 80%; margin: 0 auto;"></div>
+    <br><br>
+    <button onclick="backToMenu()">Back</button>
+  </div>
 
   <div id="page-type" class="page">
     <h2>Search by Item Type</h2>
-    <select id="typeSelect" style= "width:200px;" onchange="displayTypeItems()">
+    <select id="typeSelect" onchange="displayTypeItems()">
       <option value="" disabled selected hidden>Choose a type...</option>
     </select>
     <br><br>
@@ -136,7 +136,7 @@
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxBo_7I_xNiBddZwzr5of7XOJOyyDLs2CAdHuQZ2SXrE0iOap6usWrklQ--YCyrMqmPow/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwjUWTv-k7shRtPEwfK8zZBW-LoZPWOHBs52MNGcapnfELcMVo0r6lyYVxZ4Gisrb-eZQ/exec";
 
 let inventorySession = { store: null, entries: {} };
 
@@ -149,13 +149,7 @@ window.onload = async function() {
   loadSessionFromLocal();
   await loadStores();
   await loadParameters();
-  
-  // Logic check: if store is not set, show the store page
-  if (!inventorySession.store) {
-    showPage("page-store");
-  } else {
-    showPage("page-menu");
-  }
+  inventorySession.store ? showPage("page-menu") : showPage("page-store");
 };
 
 async function loadStores() {
@@ -298,7 +292,7 @@ function buildReviewList() {
       container.innerHTML += `
         <div style="padding:10px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${p.item}')">
           <span style="font-weight:bold;">${p.item}</span> 
-          <span style="margin-left:10px;font-weight:bold;">${total}</span>
+          <span style="margin-left:10px;">Total: ${total}</span>
         </div>`;
     }
   });
@@ -310,63 +304,33 @@ function loadSessionFromLocal() { const saved = localStorage.getItem("inventoryS
 function downloadInventory() {
   const entries = inventorySession.entries;
   const enteredItems = parameters.filter(p => entries[p.item]);
-  
-  if (enteredItems.length === 0) {
-    alert("No items to download");
-    return;
-  }
-
+  if (enteredItems.length === 0) { alert("No items"); return; }
   let text = "";
   enteredItems.forEach(item => {
-    const itemName = item.item;
-    const units = entries[itemName];
+    text += `Item: ${item.item}\n`;
     let total = 0;
-    for (const unit in units) {
-      total += units[unit] * item.unitValues[unit];
+    for (const unit in entries[item.item]) {
+      const sub = entries[item.item][unit] * item.unitValues[unit];
+      total += sub;
+      text += `  ${unit}: ${entries[item.item][unit]} × ${item.unitValues[unit]} = ${sub}\n`;
     }
-    text += `Item: ${itemName}\nTotal: ${total}\n\n`;
+    text += `  Total: ${total}\n\n`;
   });
-
-  // Call the function to save to sheet
-  saveToSheet(text);
-
-  // Existing download logic
-  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const blob = new Blob([text], { type: "text/plain" });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = `inventory_${inventorySession.store}_${Date.now()}.txt`;
-  document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
 }
-
 
 function openClearModal() { document.getElementById("clearModal").style.display = "flex"; }
 function closeClearModal() { document.getElementById("clearModal").style.display = "none"; }
 function confirmClearAll() {
   inventorySession.entries = {};
-  saveSessionToLocal(); // Add this
+  saveSessionToLocal();
   closeClearModal();
   backToMenu();
-}
-  async function saveToSheet(dataText) {
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        action: "saveInventory",
-        store: inventorySession.store,
-        content: dataText
-      })
-    });
-    console.log("Data sent to Google Sheet.");
-  } catch (error) {
-    console.error("Error saving to sheet:", error);
-  }
 }
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
