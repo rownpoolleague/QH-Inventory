@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Inventory App">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <title>Inventory App</title>
+  <title>QH Inventory Helper</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     body { background-color: #ffffff; color: #000000; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; }
@@ -226,7 +226,7 @@ function downloadInventory() {
   let text = "";
   for (const itemName in entries) {
     const item = parameters.find(p => p.item === itemName);
-    text += `Item: ${itemName}\n`;
+    text += `${itemName}\n`;
     let total = 0;
     for (const unit in entries[itemName]) {
       const sub = entries[itemName][unit] * item.unitValues[unit];
