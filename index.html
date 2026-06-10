@@ -32,25 +32,25 @@
   </div>
 
   <div id="page-menu" class="page">
-    <h2>Inventory Menu</h2>
-    <button onclick="goNameSearch()">Search by Item Name</button>
+    <h2>Search Inventory</h2>
+    <button onclick="goNameSearch()">Search by Name</button>
     <br><br>
-    <button onclick="goTypeSearch()">Search by Item Type</button>
+    <button onclick="goTypeSearch()">Search by Type</button>
     <br><br>
     <button onclick="goReview()">Review Inventory</button>
   </div>
 
   <div id="page-name" class="page">
-    <h2>Search by Item Name</h2>
-    <input id="nameInput" style="width:280px" type="text" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
+    <h2>Search by Name</h2>
+    <input id="nameInput" style="width:280px;" type="text" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
     <div id="customDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; text-align: left; width: 80%; margin: 0 auto;"></div>
     <br><br>
     <button onclick="backToMenu()">Back</button>
   </div>
 
   <div id="page-type" class="page">
-    <h2>Search by Item Type</h2>
-    <select id="typeSelect" style="width: 280px" onchange="displayTypeItems()">
+    <h2>Search by Type</h2>
+    <select id="typeSelect" style="width: 280px;" onchange="displayTypeItems()">
       <option value="" disabled selected hidden>Choose a type...</option>
     </select>
     <br><br>
