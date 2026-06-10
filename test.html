@@ -37,7 +37,7 @@
     button {
       background-color: #d32f2f;
       color: #ffffff;
-      border: 2px solid #000000; 
+      border: 3px solid #000000; 
       box-sizing: border-box;
       width: 275px;
       border-radius: 6px;
@@ -45,7 +45,7 @@
       font-weight: bold;
       cursor: pointer;
       margin: 5px;
-      font-size: 30px;
+      font-size: 22px;
     }
     .logo-fixed-bottom {
       position: absolute;
@@ -75,7 +75,7 @@
   </div>
 
   <div id="page-menu" class="page">
-    <h2>Inventory Menu</h2>
+    <h2>QH Inventory Helper</h2>
     <button onclick="goNameSearch()">Search by Item Name</button>
     <br><br>
     <button onclick="goTypeSearch()">Search by Item Type</button>
@@ -84,17 +84,16 @@
   </div>
 
   <div id="page-name" class="page">
-    <h2>Search by Item Name</h2>
-    <input id="nameInput" type="text" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
-    <div id="customDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; text-align: left; width: 80%; margin: 0 auto;"></div>
-    <br><br>
-    <button onclick="selectNameItem()">Go</button>
-    <button onclick="backToMenu()">Back</button>
-  </div>
+  <h2>Search by Item Name</h2>
+  <input id="nameInput" type="text" style="width:200px;" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
+  <div id="customDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; text-align: left; width: 80%; margin: 0 auto;"></div>
+  <br><br>
+  <button onclick="backToMenu()">Back</button>
+</div>
 
   <div id="page-type" class="page">
     <h2>Search by Item Type</h2>
-    <select id="typeSelect" onchange="displayTypeItems()">
+    <select id="typeSelect" style= "width:200px;" onchange="displayTypeItems()">
       <option value="" disabled selected hidden>Choose a type...</option>
     </select>
     <br><br>
@@ -150,7 +149,7 @@ window.onload = async function() {
   loadSessionFromLocal();
   await loadStores();
   await loadParameters();
-  showPage("page-store");
+  inventorySession.store ? showPage("page-menu") : showPage("page-store");
 };
 
 async function loadStores() {
@@ -217,8 +216,8 @@ function filterNameList() {
 }
 
 function selectDropdownItem(itemName) {
-  document.getElementById("nameInput").value = itemName;
   document.getElementById("customDropdown").style.display = "none";
+  openItemEntry(itemName);
 }
 
 function populateTypeList() {
@@ -265,11 +264,6 @@ function displayTypeItems() {
   filtered.forEach(item => { container.innerHTML += `<div style="padding:6px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${item.item}')">${item.item}</div>`; });
 }
 
-function selectNameItem() {
-  const name = document.getElementById("nameInput").value.trim();
-  if (name) openItemEntry(name);
-}
-
 function updateItemTotal() {
   const itemName = document.getElementById("entryItemName").innerText;
   const item = parameters.find(p => p.item === itemName);
@@ -285,51 +279,76 @@ function goReview() { buildReviewList(); showPage("page-review"); }
 function buildReviewList() {
   const container = document.getElementById("reviewList");
   container.innerHTML = "";
-  const entries = inventorySession.entries;
-  if (Object.keys(entries).length === 0) { container.innerHTML = "<p>No items entered yet.</p>"; return; }
-  for (const itemName in entries) {
-    const item = parameters.find(p => p.item === itemName);
-    let total = 0, unitBreakdown = "";
-    for (const unit in entries[itemName]) {
-      const sub = entries[itemName][unit] * item.unitValues[unit];
-      total += sub;
-      unitBreakdown += `<div style="margin-left:20px;">${unit}: ${entries[itemName][unit]} × ${item.unitValues[unit]} = ${sub}</div>`;
-    }
-    container.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${itemName}')"><strong>${itemName}</strong><br>${unitBreakdown}<div style="margin-top:5px; font-weight:bold;">Total: ${total}</div></div>`;
+  if (Object.keys(inventorySession.entries).length === 0) {
+    container.innerHTML = "<p>No items entered yet.</p>";
+    return;
   }
+  parameters.forEach(p => {
+    if (inventorySession.entries[p.item]) {
+      let total = 0;
+      for (const unit in inventorySession.entries[p.item]) {
+        total += inventorySession.entries[p.item][unit] * p.unitValues[unit];
+      }
+      container.innerHTML += `
+        <div style="padding:10px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${p.item}')">
+          <span style="font-weight:bold;">${p.item}</span> 
+          <span style="margin-left:10px;font-weight:bold;">${total}</span>
+        </div>`;
+    }
+  });
 }
 
 function saveSessionToLocal() { localStorage.setItem("inventorySession", JSON.stringify(inventorySession)); }
 function loadSessionFromLocal() { const saved = localStorage.getItem("inventorySession"); if (saved) inventorySession = JSON.parse(saved); }
 
-function downloadInventory() {
+ function downloadInventory() {
   const entries = inventorySession.entries;
-  if (Object.keys(entries).length === 0) { alert("No items"); return; }
+  
+  // Filter the parameters list to only include items that have been entered
+  // This keeps the original order from the spreadsheet
+  const enteredItems = parameters.filter(p => entries[p.item]);
+
+  if (enteredItems.length === 0) {
+    alert("No items to download");
+    return;
+  }
+
   let text = "";
-  for (const itemName in entries) {
-    const item = parameters.find(p => p.item === itemName);
+
+  enteredItems.forEach(item => {
+    const itemName = item.item;
+    const units = entries[itemName];
+
     text += `Item: ${itemName}\n`;
+
     let total = 0;
-    for (const unit in entries[itemName]) {
-      const sub = entries[itemName][unit] * item.unitValues[unit];
-      total += sub;
-      text += `  ${unit}: ${entries[itemName][unit]} × ${item.unitValues[unit]} = ${sub}\n`;
+    for (const unit in units) {
+      const qty = units[unit];
+      const multiplier = item.unitValues[unit];
+      const subtotal = qty * multiplier;
+      total += subtotal;
+      text += `  ${unit} = ${subtotal}\n`;
     }
     text += `  Total: ${total}\n\n`;
-  }
-  const blob = new Blob([text], { type: "text/plain" });
+  });
+
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = `inventory_${inventorySession.store}_${Date.now()}.txt`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
 }
+
 
 function openClearModal() { document.getElementById("clearModal").style.display = "flex"; }
 function closeClearModal() { document.getElementById("clearModal").style.display = "none"; }
 function confirmClearAll() {
   inventorySession.entries = {};
-  saveSessionToLocal();
+  saveSessionToLocal(); // Add this
   closeClearModal();
   backToMenu();
 }
