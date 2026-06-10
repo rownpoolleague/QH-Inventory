@@ -149,7 +149,13 @@ window.onload = async function() {
   loadSessionFromLocal();
   await loadStores();
   await loadParameters();
-  inventorySession.store ? showPage("page-menu") : showPage("page-store");
+  
+  // Logic check: if store is not set, show the store page
+  if (!inventorySession.store) {
+    showPage("page-store");
+  } else {
+    showPage("page-menu");
+  }
 };
 
 async function loadStores() {
