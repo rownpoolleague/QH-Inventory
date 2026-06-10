@@ -199,7 +199,7 @@ function openItemEntry(itemName) {
   const savedEntry = inventorySession.entries[item.item] || {};
   item.validUnits.forEach(unit => {
     const val = savedEntry[unit] || 0;
-    container.innerHTML += `<div style="margin-bottom:8px;"><label style="display:inline-block; width:140px;">${unit} (${item.unitValues[unit]})</label><input type="number" id="unit_${unit}" min="0" value="${val}" style="width:80px;" oninput="updateItemTotal()"></div>`;
+    container.innerHTML += `<div style="margin-bottom:8px;"><label style="display:inline-block; width:140px;">${unit}</label><input type="number" id="unit_${unit}" min="0" value="${val}" style="width:80px;" oninput="updateItemTotal()"></div>`;
   });
   updateItemTotal();
   showPage("page-item-entry");
