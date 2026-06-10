@@ -319,17 +319,15 @@ function loadSessionFromLocal() { const saved = localStorage.getItem("inventoryS
     const itemName = item.item;
     const units = entries[itemName];
 
-    text += `Item: ${itemName}\n`;
-
+    // Calculate total for this item
     let total = 0;
     for (const unit in units) {
-      const qty = units[unit];
-      const multiplier = item.unitValues[unit];
-      const subtotal = qty * multiplier;
-      total += subtotal;
-      text += `  ${unit} = ${subtotal}\n`;
+      total += units[unit] * item.unitValues[unit];
     }
-    text += `  Total: ${total}\n\n`;
+
+    // Output only Item and Total
+    text += `Item: ${itemName}\n`;
+    text += `Total: ${total}\n\n`;
   });
 
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
