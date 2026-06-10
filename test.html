@@ -12,57 +12,12 @@
   <title>Inventory App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-    body {
-      background-color: #ffffff;
-      color: #000000;
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
-    }
-    .form-wrapper {
-      width: 100%;
-      min-height: 100vh;
-      border: 6px solid #000000;
-      padding: 20px;
-      text-align: center;
-      box-sizing: border-box;
-      border-radius: 10px;
-      padding-bottom: 150px; 
-      position: relative;
-    }
-    .page {
-      display: none;
-    }
-    button {
-      background-color: #d32f2f;
-      color: #ffffff;
-      border: 2px solid #000000; 
-      box-sizing: border-box;
-      width: 275px;
-      border-radius: 6px;
-      padding: 10px 20px;
-      font-weight: bold;
-      cursor: pointer;
-      margin: 5px;
-      font-size: 30px;
-    }
-    .logo-fixed-bottom {
-      position: absolute; 
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 150px;
-      z-index: 1;
-    }
-    input, select {
-      padding: 8px;
-      font-size: 20px;
-      width: 30%;
-      margin: 10px auto;
-    }
+    body { background-color: #ffffff; color: #000000; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; }
+    .form-wrapper { width: 100%; min-height: 100vh; border: 6px solid #000000; padding: 20px; text-align: center; box-sizing: border-box; border-radius: 15px; padding-bottom: 150px; position: relative; }
+    .page { display: none; }
+    button { background-color: #d32f2f; color: #ffffff; border: 2px solid #000000; box-sizing: border-box; width: 280px; border-radius: 6px; padding: 10px 20px; font-weight: bold; cursor: pointer; margin: 5px; font-size: 23px; }
+    .logo-fixed-bottom { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 150px; z-index: 1; }
+    input, select { padding: 8px; font-size: 20px; width: 30%; margin: 10px auto; }
     h2 { font-size: 30px; }
   </style>
 </head>
@@ -71,7 +26,7 @@
 <div class="form-wrapper">
   <div id="page-store" class="page">
     <h2>Select Your Store</h2>
-    <select id="storeSelect"></select>
+    <select id="storeSelect" style="width:100px;"></select>
     <br><br>
     <button onclick="enterStore()">Enter</button>
   </div>
@@ -90,7 +45,6 @@
     <input id="nameInput" type="text" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
     <div id="customDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; text-align: left; width: 80%; margin: 0 auto;"></div>
     <br><br>
-    <button onclick="selectNameItem()">Go</button>
     <button onclick="backToMenu()">Back</button>
   </div>
 
@@ -139,27 +93,17 @@
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwjUWTv-k7shRtPEwfK8zZBW-LoZPWOHBs52MNGcapnfELcMVo0r6lyYVxZ4Gisrb-eZQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxBo_7I_xNiBddZwzr5of7XOJOyyDLs2CAdHuQZ2SXrE0iOap6usWrklQ--YCyrMqmPow/exec";
+let inventorySession = { store: null, entries: {} };
+let parameters = [];
 
-let inventorySession = {
-  store: null,
-  entries: {} 
-};
-
-function showPage(id) {
-  document.querySelectorAll(".page").forEach(p => p.style.display = "none");
-  document.getElementById(id).style.display = "block";
-}
+function showPage(id) { document.querySelectorAll(".page").forEach(p => p.style.display = "none"); document.getElementById(id).style.display = "block"; }
 
 window.onload = async function() {
-  loadSessionFromLocal();    
+  loadSessionFromLocal();
   await loadStores();
   await loadParameters();
-  if (inventorySession.store) {
-    showPage("page-menu");
-  } else {
-    showPage("page-store");
-  }
+  showPage("page-store");
 };
 
 async function loadStores() {
@@ -167,118 +111,60 @@ async function loadStores() {
   const data = await res.json();
   const sel = document.getElementById("storeSelect");
   sel.innerHTML = "";
-  data.stores.forEach(s => {
-    sel.innerHTML += `<option value="${s}">${s}</option>`;
-  });
+  data.stores.forEach(s => { sel.innerHTML += `<option value="${s}">${s}</option>`; });
 }
 
-let parameters = [];
 async function loadParameters() {
   const res = await fetch(API_URL + "?action=getParameters");
   const data = await res.json();
   parameters = data.items;
 }
 
-function enterStore() {
-  inventorySession.store = document.getElementById("storeSelect").value;
-  saveSessionToLocal();
-  showPage("page-menu");
-}
-
-function goNameSearch() {
-  document.getElementById("nameInput").value = ""; 
-  document.getElementById("customDropdown").style.display = "none";
-  showPage("page-name");
-}
-
-function goTypeSearch() {
-  document.getElementById("typeItems").innerHTML = "";
-  populateTypeList();
-  document.getElementById("typeSelect").selectedIndex = 0;
-  showPage("page-type");
-}
-
-function backToMenu() {
-  showPage("page-menu");
-}
+function enterStore() { inventorySession.store = document.getElementById("storeSelect").value; saveSessionToLocal(); showPage("page-menu"); }
+function goNameSearch() { document.getElementById("nameInput").value = ""; document.getElementById("customDropdown").style.display = "none"; showPage("page-name"); }
+function goTypeSearch() { document.getElementById("typeItems").innerHTML = ""; populateTypeList(); document.getElementById("typeSelect").selectedIndex = 0; showPage("page-type"); }
+function backToMenu() { showPage("page-menu"); }
 
 function filterNameList() {
   const input = document.getElementById("nameInput");
   const filter = input.value.toLowerCase().trim();
   const dropdown = document.getElementById("customDropdown");
-  
-  if (!filter) {
-    dropdown.innerHTML = "";
-    dropdown.style.display = "none";
-    return;
-  }
-  
-  const startsWith = [];
-  const contains = [];
-
+  if (!filter) { dropdown.innerHTML = ""; dropdown.style.display = "none"; return; }
+  const startsWith = [], contains = [];
   parameters.forEach(p => {
     const itemName = p.item.toLowerCase();
-    if (itemName.startsWith(filter)) {
-      startsWith.push(p);
-    } else if (itemName.includes(filter)) {
-      contains.push(p);
-    }
+    if (itemName.startsWith(filter)) startsWith.push(p);
+    else if (itemName.includes(filter)) contains.push(p);
   });
-
   startsWith.sort((a, b) => a.item.localeCompare(b.item));
   contains.sort((a, b) => a.item.localeCompare(b.item));
-
   const filtered = startsWith.concat(contains);
-  
   dropdown.innerHTML = "";
-  
   if (filtered.length > 0) {
     dropdown.style.display = "block";
     filtered.forEach(p => {
       const isStart = startsWith.includes(p);
-      dropdown.innerHTML += `
-        <div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; ${isStart ? 'font-weight:bold;' : ''}" 
-             onclick="selectDropdownItem('${p.item.replace(/'/g, "\\'")}')">
-          ${p.item}
-        </div>
-      `;
+      dropdown.innerHTML += `<div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; ${isStart ? 'font-weight:bold;' : ''}" onclick="openItemEntry('${p.item.replace(/'/g, "\\'")}')">${p.item}</div>`;
     });
-  } else {
-    dropdown.style.display = "none";
-  }
-}
-
-function selectDropdownItem(itemName) {
-  document.getElementById("nameInput").value = itemName;
-  document.getElementById("customDropdown").style.display = "none";
+  } else { dropdown.style.display = "none"; }
 }
 
 function populateTypeList() {
   const sel = document.getElementById("typeSelect");
   sel.innerHTML = '<option value="" disabled selected hidden>Choose a type...</option>';
-  const types = [...new Set(parameters.map(p => p.type))];
-  types.forEach(t => {
-    sel.innerHTML += `<option value="${t}">${t}</option>`;
-  });
+  [...new Set(parameters.map(p => p.type))].forEach(t => { sel.innerHTML += `<option value="${t}">${t}</option>`; });
 }
 
 function openItemEntry(itemName) {
   const item = parameters.find(p => p.item === itemName);
-  if (!item) { alert("Item not found"); return; }
+  if (!item) return;
   document.getElementById("entryItemName").innerText = item.item;
   const container = document.getElementById("unitInputs");
   container.innerHTML = "";
   const savedEntry = inventorySession.entries[item.item] || {};
-
   item.validUnits.forEach(unit => {
-    const multiplier = item.unitValues[unit];
-    const savedValue = savedEntry[unit] || 0;
-    container.innerHTML += `
-      <div style="margin-bottom:8px;">
-        <label style="display:inline-block; width:140px;">${unit} (${multiplier})</label>
-        <input type="number" id="unit_${unit}" min="0" value="${savedValue}" style="width:80px;" oninput="updateItemTotal()">
-      </div>
-    `;
+    const val = savedEntry[unit] || 0;
+    container.innerHTML += `<div style="margin-bottom:8px;"><label style="display:inline-block; width:140px;">${unit} (${item.unitValues[unit]})</label><input type="number" id="unit_${unit}" min="0" value="${val}" style="width:80px;" oninput="updateItemTotal()"></div>`;
   });
   updateItemTotal();
   showPage("page-item-entry");
@@ -293,7 +179,7 @@ function saveItemEntry() {
     if (val > 0) entry[unit] = val;
   });
   inventorySession.entries[itemName] = entry;
-  saveSessionToLocal();   
+  saveSessionToLocal();    
   backToMenu();
 }
 
@@ -303,19 +189,7 @@ function displayTypeItems() {
   const container = document.getElementById("typeItems");
   const filtered = parameters.filter(p => p.type === selectedType);
   container.innerHTML = "";
-  filtered.forEach(item => {
-    container.innerHTML += `
-      <div style="padding:6px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${item.item}')">
-        ${item.item}
-      </div>
-    `;
-  });
-}
-
-function selectNameItem() {
-  const name = document.getElementById("nameInput").value.trim();
-  if (!name) return;
-  openItemEntry(name);
+  filtered.forEach(item => { container.innerHTML += `<div style="padding:6px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${item.item}')">${item.item}</div>`; });
 }
 
 function updateItemTotal() {
@@ -324,113 +198,55 @@ function updateItemTotal() {
   let total = 0;
   item.validUnits.forEach(unit => {
     const qty = Number(document.getElementById("unit_" + unit).value) || 0;
-    const multiplier = item.unitValues[unit];
-    total += qty * multiplier;
+    total += qty * item.unitValues[unit];
   });
   document.getElementById("itemTotal").innerText = "Total: " + total;
 }
 
-function goReview() {
-  buildReviewList();
-  showPage("page-review");
-}
-
+function goReview() { buildReviewList(); showPage("page-review"); }
 function buildReviewList() {
-  const container = document.getElementById("reviewList");
-  container.innerHTML = "";
-  const entries = inventorySession.entries;
-  if (Object.keys(entries).length === 0) {
-    container.innerHTML = "<p>No items entered yet.</p>";
-    return;
-  }
-  for (const itemName in entries) {
-    const item = parameters.find(p => p.item === itemName);
-    const entry = entries[itemName];
-    let total = 0;
-    let unitBreakdown = "";
-    for (const unit in entry) {
-      const qty = entry[unit];
-      const multiplier = item.unitValues[unit];
-      const subtotal = qty * multiplier;
-      total += subtotal;
-      unitBreakdown += `<div style="margin-left:20px;">${unit}: ${qty} × ${multiplier} = ${subtotal}</div>`;
-    }
-    container.innerHTML += `
-      <div style="padding:10px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="editReviewItem('${itemName}')">
-        <strong>${itemName}</strong><br>${unitBreakdown}
-        <div style="margin-top:5px; font-weight:bold;">Total: ${total}</div>
-      </div>
-    `;
-  }
+    const container = document.getElementById("reviewList");
+    container.innerHTML = "";
+    if (Object.keys(inventorySession.entries).length === 0) { container.innerHTML = "<p>No items entered yet.</p>"; return; }
+    parameters.forEach(p => {
+        if (inventorySession.entries[p.item]) {
+            let total = 0;
+            for (const unit in inventorySession.entries[p.item]) { total += inventorySession.entries[p.item][unit] * p.unitValues[unit]; }
+            container.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${p.item}')"><span style="font-weight:bold;">${p.item}</span> <span style="margin-left:10px;font-weight:bold">Total: ${total}</span></div>`;
+        }
+    });
 }
 
-function saveSessionToLocal() {
-  localStorage.setItem("inventorySession", JSON.stringify(inventorySession));
-}
-
-function loadSessionFromLocal() {
-  const saved = localStorage.getItem("inventorySession");
-  if (saved) { inventorySession = JSON.parse(saved); }
-}
-
-function editReviewItem(itemName) {
-  openItemEntry(itemName);
-}
+function saveSessionToLocal() { localStorage.setItem("inventorySession", JSON.stringify(inventorySession)); }
+function loadSessionFromLocal() { const saved = localStorage.getItem("inventorySession"); if (saved) inventorySession = JSON.parse(saved); }
 
 function downloadInventory() {
   const entries = inventorySession.entries;
-  if (Object.keys(entries).length === 0) { alert("No items to download"); return; }
+  if (Object.keys(entries).length === 0) { alert("No items"); return; }
   let text = "";
   for (const itemName in entries) {
     const item = parameters.find(p => p.item === itemName);
-    const units = entries[itemName];
     text += `Item: ${itemName}\n`;
     let total = 0;
-    for (const unit in units) {
-      const qty = units[unit];
-      const multiplier = item.unitValues[unit];
-      const subtotal = qty * multiplier;
-      total += subtotal;
-      text += `  ${unit}: ${qty} × ${multiplier} = ${subtotal}\n`;
+    for (const unit in entries[itemName]) {
+      const sub = entries[itemName][unit] * item.unitValues[unit];
+      total += sub;
+      text += `  ${unit}: ${entries[itemName][unit]} × ${item.unitValues[unit]} = ${sub}\n`;
     }
     text += `  Total: ${total}\n\n`;
   }
-  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const blob = new Blob([text], { type: "text/plain" });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = `inventory_${inventorySession.store}_${Date.now()}.txt`;
-  document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
-}
-
-function clearAllInventory() {
-  if (!confirm("Clear all inventory entries?")) return;
-  inventorySession.entries = {};
-  saveSessionToLocal();
-  if (document.getElementById("page-review").style.display === "block") { buildReviewList(); }
-  alert("All inventory items cleared.");
-  backToMenu();
 }
 
 function openClearModal() { document.getElementById("clearModal").style.display = "flex"; }
 function closeClearModal() { document.getElementById("clearModal").style.display = "none"; }
-
-function confirmClearAll() {
-  inventorySession = { store: inventorySession.store, entries: {} };
-  saveSessionToLocal();
-  closeClearModal();
-  alert("All inventory cleared.");
-  backToMenu();
-}
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js');
-  });
-}
+function confirmClearAll() { inventorySession.entries = {}; saveSessionToLocal(); closeClearModal(); backToMenu(); }
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 </script>
 </body>
 </html>
