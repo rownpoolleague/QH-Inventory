@@ -301,35 +301,30 @@ function buildReviewList() {
 function saveSessionToLocal() { localStorage.setItem("inventorySession", JSON.stringify(inventorySession)); }
 function loadSessionFromLocal() { const saved = localStorage.getItem("inventorySession"); if (saved) inventorySession = JSON.parse(saved); }
 
- function downloadInventory() {
+function downloadInventory() {
   const entries = inventorySession.entries;
-  
-  // Filter the parameters list to only include items that have been entered
-  // This keeps the original order from the spreadsheet
   const enteredItems = parameters.filter(p => entries[p.item]);
-
+  
   if (enteredItems.length === 0) {
     alert("No items to download");
     return;
   }
 
   let text = "";
-
   enteredItems.forEach(item => {
     const itemName = item.item;
     const units = entries[itemName];
-
-    // Calculate total for this item
     let total = 0;
     for (const unit in units) {
       total += units[unit] * item.unitValues[unit];
     }
-
-    // Output only Item and Total
-    text += `Item: ${itemName}\n`;
-    text += `Total: ${total}\n\n`;
+    text += `Item: ${itemName}\nTotal: ${total}\n\n`;
   });
 
+  // Call the function to save to sheet
+  saveToSheet(text);
+
+  // Existing download logic
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -349,6 +344,23 @@ function confirmClearAll() {
   saveSessionToLocal(); // Add this
   closeClearModal();
   backToMenu();
+}
+  async function saveToSheet(dataText) {
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        action: "saveInventory",
+        store: inventorySession.store,
+        content: dataText
+      })
+    });
+    console.log("Data sent to Google Sheet.");
+  } catch (error) {
+    console.error("Error saving to sheet:", error);
+  }
 }
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
