@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta charset="UTF-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Inventory App">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Inventory App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .form-wrapper {
+      width: 100%;
+      min-height: 100vh;
+      border: 6px solid #000000;
+      padding: 20px;
+      text-align: center;
+      box-sizing: border-box;
+      border-radius: 15px;
+      padding-bottom: 150px; 
+      position: relative;
+    }
+    .page { display: none; }
+    button {
+      background-color: #d32f2f;
+      color: #ffffff;
+      border: 2px solid #000000; 
+      box-sizing: border-box;
+      width: 275px;
+      border-radius: 6px;
+      padding: 10px 20px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 30px;
+    }
+    .logo-fixed-bottom {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      z-index: 1;
+    }
+    input, select {
+      padding: 8px;
+      font-size: 20px;
+      width: 30%;
+      margin: 10px auto;
+    }
+    h2 { font-size: 30px; }
+  </style>
+</head>
+<body>
+
+<div class="form-wrapper">
+  <div id="page-store" class="page">
+    <h2>Select Your Store</h2>
+    <select id="storeSelect"></select>
+    <br><br>
+    <button onclick="enterStore()">Enter</button>
+  </div>
+
+  <div id="page-menu" class="page">
+    <h2>Inventory Menu</h2>
+    <button onclick="goNameSearch()">Search by Item Name</button>
+    <br><br>
+    <button onclick="goTypeSearch()">Search by Item Type</button>
+    <br><br>
+    <button onclick="goReview()">Review Inventory</button>
+  </div>
+
+  <div id="page-name" class="page">
+    <h2>Search by Item Name</h2>
+    <input id="nameInput" type="text" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
+    <div id="customDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; text-align: left; width: 80%; margin: 0 auto;"></div>
+    <br><br>
+    <button onclick="selectNameItem()">Go</button>
+    <button onclick="backToMenu()">Back</button>
+  </div>
+
+  <div id="page-type" class="page">
+    <h2>Search by Item Type</h2>
+    <select id="typeSelect" onchange="displayTypeItems()">
+      <option value="" disabled selected hidden>Choose a type...</option>
+    </select>
+    <br><br>
+    <div id="typeItems"></div>
+    <br>
+    <button onclick="backToMenu()">Back</button>
+  </div>
+
+  <div id="page-item-entry" class="page">
+    <h2 id="entryItemName"></h2>
+    <div id="unitInputs"></div>
+    <br>
+    <div id="itemTotal" style="margin-top:10px; font-size:18px; font-weight:bold;">Total: 0</div>
+    <button onclick="saveItemEntry()">Save Item</button>
+    <br><br>
+    <button onclick="backToMenu()">Back</button>
+  </div>
+
+  <div id="page-review" class="page">
+    <h2>Review Inventory</h2>
+    <div id="reviewList"></div>
+    <br><br>
+    <button onclick="downloadInventory()">Download Inventory</button>
+    <br><br>
+    <button onclick="openClearModal()">Clear All</button>
+    <br><br>
+    <button onclick="backToMenu()">Back</button>
+  </div>
+
+  <img src="qhicon512.png" class="logo-fixed-bottom">
+</div>
+
+<div id="clearModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
+  <div style="background:white; padding:20px; width:80%; max-width:300px; border-radius:8px; text-align:center;">
+    <h3>Clear All Inventory?</h3>
+    <p>This will remove all saved items.</p>
+    <button onclick="confirmClearAll()" style="background:#c62828;">Clear All</button>
+    <button onclick="closeClearModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwjUWTv-k7shRtPEwfK8zZBW-LoZPWOHBs52MNGcapnfELcMVo0r6lyYVxZ4Gisrb-eZQ/exec";
+
+let inventorySession = { store: null, entries: {} };
+
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+  document.getElementById(id).style.display = "block";
+}
+
+window.onload = async function() {
+  loadSessionFromLocal();
+  await loadStores();
+  await loadParameters();
+  showPage("page-store");
+};
+
+async function loadStores() {
+  const res = await fetch(API_URL + "?action=getStores");
+  const data = await res.json();
+  const sel = document.getElementById("storeSelect");
+  sel.innerHTML = "";
+  data.stores.forEach(s => { sel.innerHTML += `<option value="${s}">${s}</option>`; });
+}
+
+let parameters = [];
+async function loadParameters() {
+  const res = await fetch(API_URL + "?action=getParameters");
+  const data = await res.json();
+  parameters = data.items;
+}
+
+function enterStore() {
+  inventorySession.store = document.getElementById("storeSelect").value;
+  saveSessionToLocal();
+  showPage("page-menu");
+}
+
+function goNameSearch() {
+  document.getElementById("nameInput").value = ""; 
+  document.getElementById("customDropdown").style.display = "none";
+  showPage("page-name");
+}
+
+function goTypeSearch() {
+  document.getElementById("typeItems").innerHTML = "";
+  populateTypeList();
+  document.getElementById("typeSelect").selectedIndex = 0;
+  showPage("page-type");
+}
+
+function backToMenu() { showPage("page-menu"); }
+
+function filterNameList() {
+  const input = document.getElementById("nameInput");
+  const filter = input.value.toLowerCase().trim();
+  const dropdown = document.getElementById("customDropdown");
+  if (!filter) { dropdown.innerHTML = ""; dropdown.style.display = "none"; return; }
+  
+  const startsWith = [];
+  const contains = [];
+  parameters.forEach(p => {
+    const itemName = p.item.toLowerCase();
+    if (itemName.startsWith(filter)) startsWith.push(p);
+    else if (itemName.includes(filter)) contains.push(p);
+  });
+  startsWith.sort((a, b) => a.item.localeCompare(b.item));
+  contains.sort((a, b) => a.item.localeCompare(b.item));
+  const filtered = startsWith.concat(contains);
+  
+  dropdown.innerHTML = "";
+  if (filtered.length > 0) {
+    dropdown.style.display = "block";
+    filtered.forEach(p => {
+      const isStart = startsWith.includes(p);
+      dropdown.innerHTML += `<div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; ${isStart ? 'font-weight:bold;' : ''}" onclick="selectDropdownItem('${p.item.replace(/'/g, "\\'")}')">${p.item}</div>`;
+    });
+  } else { dropdown.style.display = "none"; }
+}
+
+function selectDropdownItem(itemName) {
+  document.getElementById("nameInput").value = itemName;
+  document.getElementById("customDropdown").style.display = "none";
+}
+
+function populateTypeList() {
+  const sel = document.getElementById("typeSelect");
+  sel.innerHTML = '<option value="" disabled selected hidden>Choose a type...</option>';
+  const types = [...new Set(parameters.map(p => p.type))];
+  types.forEach(t => { sel.innerHTML += `<option value="${t}">${t}</option>`; });
+}
+
+function openItemEntry(itemName) {
+  const item = parameters.find(p => p.item === itemName);
+  if (!item) return;
+  document.getElementById("entryItemName").innerText = item.item;
+  const container = document.getElementById("unitInputs");
+  container.innerHTML = "";
+  const savedEntry = inventorySession.entries[item.item] || {};
+  item.validUnits.forEach(unit => {
+    const val = savedEntry[unit] || 0;
+    container.innerHTML += `<div style="margin-bottom:8px;"><label style="display:inline-block; width:140px;">${unit} (${item.unitValues[unit]})</label><input type="number" id="unit_${unit}" min="0" value="${val}" style="width:80px;" oninput="updateItemTotal()"></div>`;
+  });
+  updateItemTotal();
+  showPage("page-item-entry");
+}
+
+function saveItemEntry() {
+  const itemName = document.getElementById("entryItemName").innerText;
+  const item = parameters.find(p => p.item === itemName);
+  const entry = {};
+  item.validUnits.forEach(unit => {
+    const val = Number(document.getElementById("unit_" + unit).value);
+    if (val > 0) entry[unit] = val;
+  });
+  inventorySession.entries[itemName] = entry;
+  saveSessionToLocal();   
+  backToMenu();
+}
+
+function displayTypeItems() {
+  const selectedType = document.getElementById("typeSelect").value;
+  if (!selectedType) return; 
+  const container = document.getElementById("typeItems");
+  const filtered = parameters.filter(p => p.type === selectedType);
+  container.innerHTML = "";
+  filtered.forEach(item => { container.innerHTML += `<div style="padding:6px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${item.item}')">${item.item}</div>`; });
+}
+
+function selectNameItem() {
+  const name = document.getElementById("nameInput").value.trim();
+  if (name) openItemEntry(name);
+}
+
+function updateItemTotal() {
+  const itemName = document.getElementById("entryItemName").innerText;
+  const item = parameters.find(p => p.item === itemName);
+  let total = 0;
+  item.validUnits.forEach(unit => {
+    const qty = Number(document.getElementById("unit_" + unit).value) || 0;
+    total += qty * item.unitValues[unit];
+  });
+  document.getElementById("itemTotal").innerText = "Total: " + total;
+}
+
+function goReview() { buildReviewList(); showPage("page-review"); }
+function buildReviewList() {
+  const container = document.getElementById("reviewList");
+  container.innerHTML = "";
+  const entries = inventorySession.entries;
+  if (Object.keys(entries).length === 0) { container.innerHTML = "<p>No items entered yet.</p>"; return; }
+  for (const itemName in entries) {
+    const item = parameters.find(p => p.item === itemName);
+    let total = 0, unitBreakdown = "";
+    for (const unit in entries[itemName]) {
+      const sub = entries[itemName][unit] * item.unitValues[unit];
+      total += sub;
+      unitBreakdown += `<div style="margin-left:20px;">${unit}: ${entries[itemName][unit]} × ${item.unitValues[unit]} = ${sub}</div>`;
+    }
+    container.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${itemName}')"><strong>${itemName}</strong><br>${unitBreakdown}<div style="margin-top:5px; font-weight:bold;">Total: ${total}</div></div>`;
+  }
+}
+
+function saveSessionToLocal() { localStorage.setItem("inventorySession", JSON.stringify(inventorySession)); }
+function loadSessionFromLocal() { const saved = localStorage.getItem("inventorySession"); if (saved) inventorySession = JSON.parse(saved); }
+
+function downloadInventory() {
+  const entries = inventorySession.entries;
+  if (Object.keys(entries).length === 0) { alert("No items"); return; }
+  let text = "";
+  for (const itemName in entries) {
+    const item = parameters.find(p => p.item === itemName);
+    text += `Item: ${itemName}\n`;
+    let total = 0;
+    for (const unit in entries[itemName]) {
+      const sub = entries[itemName][unit] * item.unitValues[unit];
+      total += sub;
+      text += `  ${unit}: ${entries[itemName][unit]} × ${item.unitValues[unit]} = ${sub}\n`;
+    }
+    text += `  Total: ${total}\n\n`;
+  }
+  const blob = new Blob([text], { type: "text/plain" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `inventory_${inventorySession.store}_${Date.now()}.txt`;
+  a.click();
+}
+
+function openClearModal() { document.getElementById("clearModal").style.display = "flex"; }
+function closeClearModal() { document.getElementById("clearModal").style.display = "none"; }
+function confirmClearAll() {
+  inventorySession.entries = {};
+  saveSessionToLocal();
+  closeClearModal();
+  backToMenu();
+}
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+</script>
+</body>
+</html>
