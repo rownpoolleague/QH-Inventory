@@ -54,13 +54,14 @@
   margin: 5px;
   font-size: 30px;
 }
-.logo-fixed-bottom {
-  position: fixed;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 200px;   /* adjust */
-  z-index: 9999;
+footer {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.footer-logo {
+  width: 120px;
+  opacity: 0.9;
 }
 
     input, select {
@@ -140,17 +141,15 @@
     <button onclick="confirmClearAll()" style="background:#c62828;">Clear All</button>
     <button onclick="closeClearModal()">Cancel</button>
   </div>
+  <footer>
+  <img src="qhicon512.png" class="footer-logo">
+</footer>
+
 </div>
-<img src="qhicon512.png" class="logo-fixed-bottom">
+
 
 <script>
-/* Your existing JavaScript functions go here */
-</script>
 
-</body>
-</html>
-
-<script>
 /****************************************************
  * CONFIG
  ****************************************************/
