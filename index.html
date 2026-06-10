@@ -145,7 +145,12 @@
 
 <script>
 /* Your existing JavaScript functions go here */
+</script>
 
+</body>
+</html>
+
+<script>
 /****************************************************
  * CONFIG
  ****************************************************/
@@ -171,17 +176,10 @@ function showPage(id) {
  * INITIAL LOAD
  ****************************************************/
 window.onload = async function() {
-  loadSessionFromLocal();    
+  loadSessionFromLocal();   
   await loadStores();
   await loadParameters();
-  
-  // New Logic: If store is already in local storage, skip straight to menu
-  if (inventorySession.store) {
-    showPage("page-menu");
-  } else {
-    showPage("page-store");
-  }
-};
+  showPage("page-store");
 };
 
 
@@ -215,11 +213,10 @@ async function loadParameters() {
  * ENTER STORE
  ****************************************************/
 function enterStore() {
-  const selectedStore = document.getElementById("storeSelect").value;
-  inventorySession.store = selectedStore; // Set the store
-  saveSessionToLocal(); // Save to local storage
+  inventorySession.store = document.getElementById("storeSelect").value;
   showPage("page-menu");
 }
+
 /****************************************************
  * MENU NAVIGATION
  ****************************************************/
@@ -511,18 +508,13 @@ function downloadInventory() {
 function clearAllInventory() {
   if (!confirm("Clear all inventory entries?")) return;
 
-  // Clear only the entries
-  inventorySession.entries = {};
+  inventorySession = {
+    store: inventorySession.store,
+    entries: {}
+  };
 
-  // Save the cleared state
   saveSessionToLocal();
-  
-  // Refresh the UI if they are on the review page
-  if (document.getElementById("page-review").style.display === "block") {
-    buildReviewList();
-  }
-
-  alert("All inventory items cleared.");
+  alert("All inventory cleared.");
   backToMenu();
 }
 
