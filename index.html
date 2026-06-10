@@ -42,7 +42,7 @@
 
   <div id="page-name" class="page">
     <h2>Search by Item Name</h2>
-    <input id="nameInput" type="text" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
+    <input id="nameInput" style="width:280px" type="text" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
     <div id="customDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; text-align: left; width: 80%; margin: 0 auto;"></div>
     <br><br>
     <button onclick="backToMenu()">Back</button>
@@ -50,7 +50,7 @@
 
   <div id="page-type" class="page">
     <h2>Search by Item Type</h2>
-    <select id="typeSelect" onchange="displayTypeItems()">
+    <select id="typeSelect" style="width: 280px" onchange="displayTypeItems()">
       <option value="" disabled selected hidden>Choose a type...</option>
     </select>
     <br><br>
