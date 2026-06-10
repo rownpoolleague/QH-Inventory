@@ -2,74 +2,23 @@
 <html>
 <head>
   <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
-<link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="theme-color" content="#000000">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <meta charset="UTF-8">
   <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Inventory App">
-<link rel="apple-touch-icon" href="icon-192.png">
-  <title>Inventory App</title>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Inventory App">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>QH Inventory Helper</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-    /* Centers everything on the page */
-    body {
-  background-color: #ffffff;
-  color: #000000;
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  padding: 0; /* Changed from 20px to 0 */
-  display: flex;
-  justify-content: center;
-  min-height: 100vh;
-}
-
-    /* Container for the app */
-   .form-wrapper {
-  width: 100%; /* Will now fill the width of the phone */
-  min-height: 100vh; /* Ensures the background covers the whole screen */
-  border: 6px solid #000000;
-  padding: 20px;
-  text-align: center;
-  box-sizing: border-box;
-  border-radius: 15px;
-  /* Removed max-width if you want true edge-to-edge on all devices */
-}
-
-    .page {
-      display: none;
-    }
-
-    button {
-  background-color: #d32f2f;
-  color: #ffffff;
-  /* Add these two lines */
-  border: 2px solid #000000; 
-  box-sizing: border-box;
-  width: 275px;
-  border-radius: 6px;
-  padding: 10px 20px;
-  font-weight: bold;
-  cursor: pointer;
-  margin: 5px;
-  font-size: 30px;
-}
-.logo-fixed-bottom {
-  position: fixed;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 200px;   /* adjust */
-  z-index: 9999;
-}
-
-    input, select {
-      padding: 8px;
-      font-size: 20px;
-      width: 30%;
-      margin: 10px auto;
-    }
-    h2{font-size: 30px;}
+    body { background-color: #ffffff; color: #000000; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; }
+    .form-wrapper { width: 100%; min-height: 100vh; border: 6px solid #000000; padding: 20px; text-align: center; box-sizing: border-box; border-radius: 5px; padding-bottom: 150px; position: relative; }
+    .page { display: none; }
+    button { background-color: #d32f2f; color: #ffffff; border: 2px solid #000000; box-sizing: border-box; width: 280px; border-radius: 6px; padding: 10px 20px; font-weight: bold; cursor: pointer; margin: 5px; font-size: 23px; }
+    .logo-fixed-bottom { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 150px; z-index: 1; }
+    input, select { padding: 8px; font-size: 20px; width: 30%; margin: 10px auto; }
+    h2 { font-size: 30px; }
   </style>
 </head>
 <body>
@@ -77,7 +26,7 @@
 <div class="form-wrapper">
   <div id="page-store" class="page">
     <h2>Select Your Store</h2>
-    <select id="storeSelect"></select>
+    <select id="storeSelect" style="width:100px;"></select>
     <br><br>
     <button onclick="enterStore()">Enter</button>
   </div>
@@ -96,7 +45,6 @@
     <input id="nameInput" type="text" placeholder="Start typing..." oninput="filterNameList()" autocomplete="off">
     <div id="customDropdown" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; text-align: left; width: 80%; margin: 0 auto;"></div>
     <br><br>
-    <button onclick="selectNameItem()">Go</button>
     <button onclick="backToMenu()">Back</button>
   </div>
 
@@ -131,8 +79,16 @@
     <br><br>
     <button onclick="backToMenu()">Back</button>
   </div>
-</div>
 
+  <img src="qhicon512.png" class="logo-fixed-bottom">
+</div>
+<div id="successModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
+  <div style="background:white; padding:20px; width:80%; max-width:300px; border-radius:8px; text-align:center;">
+    <h3>Success!</h3>
+    <p>Inventory saved successfully!</p>
+    <button onclick="closeSuccessModal()">OK</button>
+  </div>
+</div>
 <div id="clearModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center;">
   <div style="background:white; padding:20px; width:80%; max-width:300px; border-radius:8px; text-align:center;">
     <h3>Clear All Inventory?</h3>
@@ -141,67 +97,28 @@
     <button onclick="closeClearModal()">Cancel</button>
   </div>
 </div>
-<img src="qhicon512.png" class="logo-fixed-bottom">
 
 <script>
-/* Your existing JavaScript functions go here */
-</script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzEv7mXq6-yIB1xnGHQ0IwGPBQexC528NdV7BoyyQvbgO1pfdaDHpiJNU6FPKjIFeMwLw/exec";
+let inventorySession = { store: null, entries: {} };
+let parameters = [];
 
-</body>
-</html>
+function showPage(id) { document.querySelectorAll(".page").forEach(p => p.style.display = "none"); document.getElementById(id).style.display = "block"; }
 
-<script>
-/****************************************************
- * CONFIG
- ****************************************************/
-const API_URL = "https://script.google.com/macros/s/AKfycbwjUWTv-k7shRtPEwfK8zZBW-LoZPWOHBs52MNGcapnfELcMVo0r6lyYVxZ4Gisrb-eZQ/exec";
-
-/****************************************************
- * SESSION OBJECT
- ****************************************************/
-let inventorySession = {
-  store: null,
-  entries: {} 
-};
-
-/****************************************************
- * PAGE NAVIGATION
- ****************************************************/
-function showPage(id) {
-  document.querySelectorAll(".page").forEach(p => p.style.display = "none");
-  document.getElementById(id).style.display = "block";
-}
-
-/****************************************************
- * INITIAL LOAD
- ****************************************************/
 window.onload = async function() {
-  loadSessionFromLocal();   
+  loadSessionFromLocal();
   await loadStores();
   await loadParameters();
   showPage("page-store");
 };
 
-
-/****************************************************
- * LOAD STORES
- ****************************************************/
 async function loadStores() {
   const res = await fetch(API_URL + "?action=getStores");
   const data = await res.json();
-
   const sel = document.getElementById("storeSelect");
   sel.innerHTML = "";
-
-  data.stores.forEach(s => {
-    sel.innerHTML += `<option value="${s}">${s}</option>`;
-  });
+  data.stores.forEach(s => { sel.innerHTML += `<option value="${s}">${s}</option>`; });
 }
-
-/****************************************************
- * LOAD PARAMETERS (items, types, units)
- ****************************************************/
-let parameters = [];
 
 async function loadParameters() {
   const res = await fetch(API_URL + "?action=getParameters");
@@ -209,340 +126,172 @@ async function loadParameters() {
   parameters = data.items;
 }
 
-/****************************************************
- * ENTER STORE
- ****************************************************/
-function enterStore() {
-  inventorySession.store = document.getElementById("storeSelect").value;
-  showPage("page-menu");
-}
+function enterStore() { inventorySession.store = document.getElementById("storeSelect").value; saveSessionToLocal(); showPage("page-menu"); }
+function goNameSearch() { document.getElementById("nameInput").value = ""; document.getElementById("customDropdown").style.display = "none"; showPage("page-name"); }
+function goTypeSearch() { document.getElementById("typeItems").innerHTML = ""; populateTypeList(); document.getElementById("typeSelect").selectedIndex = 0; showPage("page-type"); }
+function backToMenu() { showPage("page-menu"); }
 
-/****************************************************
- * MENU NAVIGATION
- ****************************************************/
-function goNameSearch() {
-  document.getElementById("nameInput").value = ""; 
-  document.getElementById("customDropdown").style.display = "none"; // Hide list initially
-  showPage("page-name");
-}
-
-function goTypeSearch() {
-  document.getElementById("typeItems").innerHTML = "";
-  populateTypeList();
-  document.getElementById("typeSelect").selectedIndex = 0;
-  showPage("page-type");
-}
-
-function backToMenu() {
-  showPage("page-menu");
-}
-
-/****************************************************
- * CUSTOM VERTICAL DROPDOWN FILTER LOGIC (Replaced old populateNameList)
- ****************************************************/
 function filterNameList() {
   const input = document.getElementById("nameInput");
   const filter = input.value.toLowerCase().trim();
   const dropdown = document.getElementById("customDropdown");
-  
-  // If the box is empty, completely hide the dropdown box
-  if (!filter) {
-    dropdown.innerHTML = "";
-    dropdown.style.display = "none";
-    return;
-  }
-  
-  // Filter parameters by what the user types
-  const filtered = parameters.filter(p => p.item.toLowerCase().includes(filter));
-  
-  // Build the list items inside our custom container
+  if (!filter) { dropdown.innerHTML = ""; dropdown.style.display = "none"; return; }
+  const startsWith = [], contains = [];
+  parameters.forEach(p => {
+    const itemName = p.item.toLowerCase();
+    if (itemName.startsWith(filter)) startsWith.push(p);
+    else if (itemName.includes(filter)) contains.push(p);
+  });
+  startsWith.sort((a, b) => a.item.localeCompare(b.item));
+  contains.sort((a, b) => a.item.localeCompare(b.item));
+  const filtered = startsWith.concat(contains);
   dropdown.innerHTML = "";
   if (filtered.length > 0) {
-    dropdown.style.display = "block"; // Show the container row
+    dropdown.style.display = "block";
     filtered.forEach(p => {
-      dropdown.innerHTML += `
-        <div style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;" 
-             onclick="selectDropdownItem('${p.item.replace(/'/g, "\\'")}')">
-          ${p.item}
-        </div>
-      `;
+      const isStart = startsWith.includes(p);
+      dropdown.innerHTML += `<div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; ${isStart ? 'font-weight:bold;' : ''}" onclick="openItemEntry('${p.item.replace(/'/g, "\\'")}')">${p.item}</div>`;
     });
-  } else {
-    // Hide container if there are zero matches
-    dropdown.style.display = "none";
-  }
+  } else { dropdown.style.display = "none"; }
 }
 
-// Automatically fills the text input field when an item in the list is clicked
-function selectDropdownItem(itemName) {
-  document.getElementById("nameInput").value = itemName;
-  document.getElementById("customDropdown").style.display = "none"; // Close list
-}
-
-/****************************************************
- * POPULATE TYPE DROPDOWN
- ****************************************************/
 function populateTypeList() {
   const sel = document.getElementById("typeSelect");
   sel.innerHTML = '<option value="" disabled selected hidden>Choose a type...</option>';
-
-  const types = [...new Set(parameters.map(p => p.type))];
-
-  types.forEach(t => {
-    sel.innerHTML += `<option value="${t}">${t}</option>`;
-  });
+  [...new Set(parameters.map(p => p.type))].forEach(t => { sel.innerHTML += `<option value="${t}">${t}</option>`; });
 }
 
-/****************************************************
- * ITEM ENTRY PAGE (placeholder)
- ****************************************************/
 function openItemEntry(itemName) {
   const item = parameters.find(p => p.item === itemName);
-
-  if (!item) {
-    alert("Item not found");
-    return;
-  }
-
+  if (!item) return;
   document.getElementById("entryItemName").innerText = item.item;
-
   const container = document.getElementById("unitInputs");
   container.innerHTML = "";
-
   const savedEntry = inventorySession.entries[item.item] || {};
-
   item.validUnits.forEach(unit => {
-    const multiplier = item.unitValues[unit];
-    const savedValue = savedEntry[unit] || 0;
-
-    container.innerHTML += `
-      <div style="margin-bottom:8px;">
-        <label style="display:inline-block; width:140px;">
-          ${unit} (${multiplier})
-        </label>
-        <input type="number" 
-               id="unit_${unit}" 
-               min="0" 
-               value="${savedValue}" 
-               style="width:80px;" 
-               oninput="updateItemTotal()">
-      </div>
-    `;
+    const val = savedEntry[unit] || 0;
+    container.innerHTML += `<div style="margin-bottom:8px;"><label style="display:inline-block; width:140px;">${unit} (${item.unitValues[unit]})</label><input type="number" id="unit_${unit}" min="0" value="${val}" style="width:80px;" oninput="updateItemTotal()"></div>`;
   });
-
   updateItemTotal();
   showPage("page-item-entry");
 }
 
-/****************************************************
- * SAVE ITEM ENTRY (placeholder)
- ****************************************************/
 function saveItemEntry() {
   const itemName = document.getElementById("entryItemName").innerText;
   const item = parameters.find(p => p.item === itemName);
-
   const entry = {};
-
   item.validUnits.forEach(unit => {
     const val = Number(document.getElementById("unit_" + unit).value);
     if (val > 0) entry[unit] = val;
   });
-
   inventorySession.entries[itemName] = entry;
-  saveSessionToLocal();   
+  saveSessionToLocal();    
   backToMenu();
 }
 
 function displayTypeItems() {
   const selectedType = document.getElementById("typeSelect").value;
   if (!selectedType) return; 
-
   const container = document.getElementById("typeItems");
   const filtered = parameters.filter(p => p.type === selectedType);
-
   container.innerHTML = "";
-  filtered.forEach(item => {
-    container.innerHTML += `
-      <div style="padding:6px; border-bottom:1px solid #ccc; cursor:pointer;"
-           onclick="openItemEntry('${item.item}')">
-        ${item.item}
-      </div>
-    `;
-  });
-}
-
-function selectNameItem() {
-  const name = document.getElementById("nameInput").value.trim();
-  if (!name) return;
-
-  openItemEntry(name);
+  filtered.forEach(item => { container.innerHTML += `<div style="padding:6px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${item.item}')">${item.item}</div>`; });
 }
 
 function updateItemTotal() {
   const itemName = document.getElementById("entryItemName").innerText;
   const item = parameters.find(p => p.item === itemName);
-
   let total = 0;
-
   item.validUnits.forEach(unit => {
     const qty = Number(document.getElementById("unit_" + unit).value) || 0;
-    const multiplier = item.unitValues[unit];
-    total += qty * multiplier;
+    total += qty * item.unitValues[unit];
   });
-
   document.getElementById("itemTotal").innerText = "Total: " + total;
 }
 
-function goReview() {
-  buildReviewList();
-  showPage("page-review");
-}
+function goReview() { buildReviewList(); showPage("page-review"); }
 function buildReviewList() {
-  const container = document.getElementById("reviewList");
-  container.innerHTML = "";
+    const container = document.getElementById("reviewList");
+    container.innerHTML = "";
+    if (Object.keys(inventorySession.entries).length === 0) { container.innerHTML = "<p>No items entered yet.</p>"; return; }
+    parameters.forEach(p => {
+        if (inventorySession.entries[p.item]) {
+            let total = 0;
+            for (const unit in inventorySession.entries[p.item]) { total += inventorySession.entries[p.item][unit] * p.unitValues[unit]; }
+            container.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="openItemEntry('${p.item}')"><span style="font-weight:bold;">${p.item}</span> <span style="margin-left:10px;font-weight:bold">Total: ${total}</span></div>`;
+        }
+    });
+}
 
+function saveSessionToLocal() { localStorage.setItem("inventorySession", JSON.stringify(inventorySession)); }
+function loadSessionFromLocal() { const saved = localStorage.getItem("inventorySession"); if (saved) inventorySession = JSON.parse(saved); }
+async function sendInventoryToSheet() {
   const entries = inventorySession.entries;
+  if (Object.keys(entries).length === 0) return;
 
-  if (Object.keys(entries).length === 0) {
-    container.innerHTML = "<p>No items entered yet.</p>";
-    return;
-  }
+  const payload = {
+    action: "saveInventory",
+    storeName: inventorySession.store,
+    data: []
+  };
 
-  for (const itemName in entries) {
-    const item = parameters.find(p => p.item === itemName);
-    const entry = entries[itemName];
-
-    let total = 0;
-    let unitBreakdown = "";
-
-    for (const unit in entry) {
-      const qty = entry[unit];
-      const multiplier = item.unitValues[unit];
-      const subtotal = qty * multiplier;
-
-      total += subtotal;
-
-      unitBreakdown += `
-        <div style="margin-left:20px;">
-          ${unit}: ${qty} × ${multiplier} = ${subtotal}
-        </div>
-      `;
+  parameters.forEach(p => {
+    if (entries[p.item]) {
+      let total = 0;
+      for (const unit in entries[p.item]) {
+        total += entries[p.item][unit] * p.unitValues[unit];
+      }
+      payload.data.push({ item: p.item, total: total });
     }
+  });
 
-   container.innerHTML += `
-  <div style="padding:10px; border-bottom:1px solid #ccc; cursor:pointer;"
-       onclick="editReviewItem('${itemName}')">
-    <strong>${itemName}</strong><br>
-    ${unitBreakdown}
-    <div style="margin-top:5px; font-weight:bold;">
-      Total: ${total}
-    </div>
-  </div>
-`;
-
+  try {
+    await fetch(API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    // Trigger the custom modal instead of alert
+    openSuccessModal();
+  } catch (error) {
+    console.error("Error:", error);
   }
 }
-
-/****************************************************
- * LOCAL STORAGE SUPPORT
- ****************************************************/
-function saveSessionToLocal() {
-  localStorage.setItem("inventorySession", JSON.stringify(inventorySession));
-}
-
-function loadSessionFromLocal() {
-  const saved = localStorage.getItem("inventorySession");
-  if (saved) {
-    inventorySession = JSON.parse(saved);
-  }
-}
-function editReviewItem(itemName) {
-  openItemEntry(itemName);
-}
-
-/****************************************************
- * DOWNLOAD INVENTORY
- ****************************************************/
 function downloadInventory() {
   const entries = inventorySession.entries;
-
-  if (Object.keys(entries).length === 0) {
-    alert("No items to download");
-    return;
-  }
-
+  if (Object.keys(entries).length === 0) { alert("No items"); return; }
   let text = "";
-
   for (const itemName in entries) {
     const item = parameters.find(p => p.item === itemName);
-    const units = entries[itemName];
-
     text += `Item: ${itemName}\n`;
-
     let total = 0;
-
-    for (const unit in units) {
-      const qty = units[unit];
-      const multiplier = item.unitValues[unit];
-      const subtotal = qty * multiplier;
-
-      total += subtotal;
-
-      text += `  ${unit}: ${qty} × ${multiplier} = ${subtotal}\n`;
+    for (const unit in entries[itemName]) {
+      const sub = entries[itemName][unit] * item.unitValues[unit];
+      total += sub;
+      text += `  ${unit}: ${entries[itemName][unit]} × ${item.unitValues[unit]} = ${sub}\n`;
     }
-
     text += `  Total: ${total}\n\n`;
   }
-
-  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const blob = new Blob([text], { type: "text/plain" });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = `inventory_${inventorySession.store}_${Date.now()}.txt`;
-  document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  sendInventoryToSheet();
+}
+function openSuccessModal() {
+  document.getElementById("successModal").style.display = "flex";
 }
 
-function clearAllInventory() {
-  if (!confirm("Clear all inventory entries?")) return;
-
-  inventorySession = {
-    store: inventorySession.store,
-    entries: {}
-  };
-
-  saveSessionToLocal();
-  alert("All inventory cleared.");
-  backToMenu();
+function closeSuccessModal() {
+  document.getElementById("successModal").style.display = "none";
 }
-
-function openClearModal() {
-  document.getElementById("clearModal").style.display = "flex";
-}
-
-function closeClearModal() {
-  document.getElementById("clearModal").style.display = "none";
-}
-
-function confirmClearAll() {
-  inventorySession = {
-    store: inventorySession.store, 
-    entries: {}                    
-  };
-
-  saveSessionToLocal();            
-  closeClearModal();               
-  alert("All inventory cleared."); 
-  backToMenu();                    
-}  
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js');
-  });
-}
+function openClearModal() { document.getElementById("clearModal").style.display = "flex"; }
+function closeClearModal() { document.getElementById("clearModal").style.display = "none"; }
+function confirmClearAll() { inventorySession.entries = {}; saveSessionToLocal(); closeClearModal(); backToMenu(); }
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 </script>
-
 </body>
 </html>
