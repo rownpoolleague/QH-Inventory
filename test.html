@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Inventory App">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <title>QH Inventory Helper</title>
+  <title>Inventory App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     body { background-color: #ffffff; color: #000000; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; }
@@ -93,7 +93,7 @@
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxBo_7I_xNiBddZwzr5of7XOJOyyDLs2CAdHuQZ2SXrE0iOap6usWrklQ--YCyrMqmPow/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzEv7mXq6-yIB1xnGHQ0IwGPBQexC528NdV7BoyyQvbgO1pfdaDHpiJNU6FPKjIFeMwLw/exec";
 let inventorySession = { store: null, entries: {} };
 let parameters = [];
 
@@ -219,14 +219,52 @@ function buildReviewList() {
 
 function saveSessionToLocal() { localStorage.setItem("inventorySession", JSON.stringify(inventorySession)); }
 function loadSessionFromLocal() { const saved = localStorage.getItem("inventorySession"); if (saved) inventorySession = JSON.parse(saved); }
+async function sendInventoryToSheet() {
+  const entries = inventorySession.entries;
+  if (Object.keys(entries).length === 0) {
+    alert("No items to save.");
+    return;
+  }
 
+  const payload = {
+    action: "saveInventory",
+    storeName: inventorySession.store,
+    data: []
+  };
+
+  parameters.forEach(p => {
+    if (entries[p.item]) {
+      let total = 0;
+      for (const unit in entries[p.item]) {
+        total += entries[p.item][unit] * p.unitValues[unit];
+      }
+      payload.data.push({
+        item: p.item,
+        total: total
+      });
+    }
+  });
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    alert("Inventory sent to " + inventorySession.store + " sheet!");
+  } catch (error) {
+    console.error("Error:", error);
+    alert("Failed to send data.");
+  }
+}
 function downloadInventory() {
   const entries = inventorySession.entries;
   if (Object.keys(entries).length === 0) { alert("No items"); return; }
   let text = "";
   for (const itemName in entries) {
     const item = parameters.find(p => p.item === itemName);
-    text += `${itemName}\n`;
+    text += `Item: ${itemName}\n`;
     let total = 0;
     for (const unit in entries[itemName]) {
       const sub = entries[itemName][unit] * item.unitValues[unit];
@@ -241,6 +279,7 @@ function downloadInventory() {
   a.href = url;
   a.download = `inventory_${inventorySession.store}_${Date.now()}.txt`;
   a.click();
+  sendInventoryToSheet();
 }
 
 function openClearModal() { document.getElementById("clearModal").style.display = "flex"; }
