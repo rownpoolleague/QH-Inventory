@@ -12,29 +12,9 @@
   <title>QH Inventory Helper</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-   body { 
-      background-color: #ffffff; 
-      color: #000000; 
-      font-family: 'Segoe UI', sans-serif; 
-      margin: 0; 
-      padding: 0; 
-      display: flex; 
-      justify-content: center; 
-      align-items: stretch; /* Stretches the wrapper to full height cleanly */
-      min-height: 100vh;
-     overscroll-behavior-y: contain; /* CRITICAL: Disables mobile pull-to-refresh */
-}
-    }
-    .form-wrapper { 
-      width: 100%; 
-      max-width: 600px; /* Optional: Keeps it looking tight on tablet/desktop */
-      min-height: 100vh; 
-      border: 6px solid #C90014; 
-      padding: 20px 20px 150px 20px; /* Shorthand padding */
-      text-align: center; 
-      box-sizing: border-box; /* Crucial: Ensures padding and borders are included in the 100vh height */
-      position: relative; 
-    }
+    body { background-color: #ffffff; color: #000000; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; }
+    .form-wrapper { width: 100%; min-height: 100vh; border: 6px solid #C90014; padding: 20px; text-align: center; box-sizing: border-box; padding-bottom: 150px; position: relative; }
+    .page { display: none; }
     button { background-color: #C90014; color: #ffffff; border: 2px solid #000000; box-sizing: border-box; width: 280px; border-radius: 6px; padding: 10px 20px; font-weight: bold; cursor: pointer; margin: 5px; font-size: 23px; }
     .logo-fixed-bottom { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 150px; z-index: 1; }
     input, select { padding: 8px; font-size: 20px; width: 30%; margin: 10px auto; }
