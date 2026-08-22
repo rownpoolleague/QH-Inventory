@@ -1,4 +1,4 @@
-const cacheName = 'inventory-v3';
+const cacheName = 'inventory-v4';
 const assets = [
   './',
   './index.html',
